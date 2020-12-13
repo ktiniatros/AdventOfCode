@@ -2,6 +2,7 @@ package nl.giorgos.adventofcode.y2020
 
 import nl.giorgos.adventofcode.Utils
 import org.junit.Test
+import java.math.BigInteger
 import java.nio.file.InvalidPathException
 
 class Day13 {
@@ -26,25 +27,32 @@ class Day13 {
 
     @Test
     fun ex2() {
+        val before = System.currentTimeMillis()
         val busIds = lines[1].split(',')
-        val offsets = busIds.mapIndexed { index, s -> Pair(index, if (s == "x") {
-            -1
+        val invalid = (-1).toBigInteger()
+        val offsets = busIds.mapIndexed { index, s -> Pair(index.toBigInteger(), if (s == "x") {
+            invalid
         } else {
-            s.toInt()
-        }) }.filter { it.second != -1 }
-        var condition = true
+            s.toBigInteger()
+        }) }.filter { it.second != invalid }.sortedByDescending { it.second }
+        println(offsets)
 
-        var currentTimestamp = offsets.first().second
-        while(condition) {
-            currentTimestamp += offsets.first().second
+
+        var condition = false
+
+        var factor = 1.toBigInteger()
+        val base = offsets.first().second - offsets.first().first
+        var currentTimestamp = base * factor + ((factor - 1.toBigInteger()) * offsets.first().first)
+        while(!condition) {
+            currentTimestamp = base * factor + ((factor - 1.toBigInteger()) * offsets.first().first)
             condition = offsets.map {
                 (currentTimestamp + it.first) % it.second
-            }.sum() != 0
+            }.none { it != 0.toBigInteger() }
+            factor += 1.toBigInteger()
         }
-        println(currentTimestamp)
-    }
 
-    private fun findMinimumForTwo(currentTimestamp: Int, two: List<Pair<Int, Int>>): Int {
+        println("Took; ${System.currentTimeMillis() - before}")
+        println(currentTimestamp)
 
     }
 }

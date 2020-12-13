@@ -4,7 +4,6 @@ import nl.giorgos.adventofcode.Utils
 import org.junit.Test
 import java.math.BigInteger
 import java.nio.file.InvalidPathException
-import java.util.*
 
 class Day13 {
     private val fileName = "input13.txt"
@@ -34,7 +33,7 @@ class Day13 {
         val before = System.currentTimeMillis()
         val busIds = lines[1].split(',')
         val invalid = (-1).toBigInteger()
-        val offsets = busIds.mapIndexed { index, s -> Pair(
+        var offsets = busIds.mapIndexed { index, s -> Pair(
             index.toBigInteger(), if (s == "x") {
                 invalid
             } else {
@@ -46,22 +45,26 @@ class Day13 {
 
         var condition = false
 
-        val step = 1.toBigInteger()
-        var factor = step
-        val base = offsets.first().second - offsets.first().first
-        var currentTimestamp = base * factor + ((factor - 1.toBigInteger()) * offsets.first().first)
-        while(!condition) {
-            currentTimestamp = base * factor + ((factor - 1.toBigInteger()) * offsets.first().first)
+        var loopIndex = 2.toBigInteger()
+        val step = offsets.first().second
+
+        var timestamp = loopIndex
+        while (!condition) {
+            timestamp = loopIndex * offsets.first().second - offsets.first().first
+
+//            if (timestamp > 1068781.toBigInteger()) throw Exception("stap")
+//            if (timestamp == 1068781.toBigInteger()) println("current timestamp: $loopIndex $timestamp")
             condition = offsets.map {
-                println("ypoloipo: ${(currentTimestamp + it.first) % it.second}")
-                (currentTimestamp + it.first) % it.second
-            }.none { it != 0.toBigInteger() }
-            factor += step
-            println("currentTimestamp: $currentTimestamp")
+//                if (timestamp == 1068781.toBigInteger()) {
+//                    println("First: ${it.first}, second: ${it.second}")
+//                }
+                (timestamp + it.first) % it.second == 0.toBigInteger()
+            }.all { it }
+            loopIndex += 1.toBigInteger()
         }
 
         println("Took; ${System.currentTimeMillis() - before}")
-        println(currentTimestamp)
+        println(timestamp)
 
     }
 
@@ -88,7 +91,12 @@ class Day13 {
     }
 
     private fun gcdEx2(x: Pair<Int, Int>, y: Pair<Int, Int>): Int {
-        return if (y.second == 0) x.second else gcdEx2(y, Pair(x.first, (x.first + x.second) % (y.second - y.first)))
+        return if (y.second == 0) x.second else gcdEx2(
+            y, Pair(
+                x.first,
+                (x.first + x.second) % (y.second - y.first)
+            )
+        )
     }
 
     private fun gcd(x: Int, y: Int): Int {
@@ -121,7 +129,10 @@ class Day13 {
             } else {
                 s.toBigInteger()
             }
-        ) }.filter { it.second != invalid }.sortedBy { it.second }.map { Pair(it.first.toInt(), it.second.toInt()) }
+        ) }.filter { it.second != invalid }.sortedBy { it.second }.map { Pair(
+            it.first.toInt(),
+            it.second.toInt()
+        ) }
 
         println(offsets)
 

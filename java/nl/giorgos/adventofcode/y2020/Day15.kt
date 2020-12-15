@@ -14,8 +14,12 @@ class Day15 {
             if (i > input.size) {
                 if (i == input.size + 1) {
                     val spoken = 0
-                    val p = alreadySeenNumbers[spoken]!!
-                    alreadySeenNumbers[spoken] = Pair(p.second, i)
+                    val p = alreadySeenNumbers[spoken]
+                    alreadySeenNumbers[spoken] = if (p != null) {
+                        Pair(p.second, i)
+                    } else {
+                        Pair(0, i)
+                    }
                     alreadyLastSpoken = spoken
                     numbersSpoken.add(0)
                 } else {
@@ -41,12 +45,12 @@ class Day15 {
     fun ex1() {
         assertEquals(436, find(arrayOf(0, 3, 6)))
         assertEquals(1, find(arrayOf(1,3,2)))
-//        assertEquals(10, find(arrayOf(2,1,3)))
-//        assertEquals(27, find(arrayOf(1,2,3)))
-//        assertEquals(78, find(arrayOf(2,3,1)))
-//        assertEquals(438, find(arrayOf(3,2,1)))
-//        assertEquals(1836, find(arrayOf(3,1,2)))
-//        assertEquals(1280, find(arrayOf(2,15,0,9,1,20)))
+        assertEquals(10, find(arrayOf(2,1,3)))
+        assertEquals(27, find(arrayOf(1,2,3)))
+        assertEquals(78, find(arrayOf(2,3,1)))
+        assertEquals(438, find(arrayOf(3,2,1)))
+        assertEquals(1836, find(arrayOf(3,1,2)))
+        assertEquals(1280, find(arrayOf(2,15,0,9,1,20)))
     }
 
     @Test

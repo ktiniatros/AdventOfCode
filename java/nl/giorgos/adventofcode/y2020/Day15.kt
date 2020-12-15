@@ -18,32 +18,57 @@ class Day15 {
         val before = System.currentTimeMillis()
         val numbersSpoken = mutableListOf<Int>()
 
-        val alreadySeenNumbers = mutableMapOf<Int, Int>()
+        val alreadySeenNumbers = mutableMapOf<Int, Pair<Int, Int>>()
+        var alreadyLastSpoken = -1
         for (i in 1..maxIndex) {
             if (i > input.size) {
                 if (i == input.size + 1) {
 //                    println("Spoken 1s 0")
+                    val spoken = 0
+                    val p = alreadySeenNumbers[spoken]!!
+                    alreadySeenNumbers[spoken] = Pair(p.second, i)
+                    alreadyLastSpoken = spoken
                     numbersSpoken.add(0)
                 } else {
                     val lastSpoken = numbersSpoken.last()
                     val lastIndex = numbersSpoken.size - 1
                     var currentIndex = numbersSpoken.size - 2
+
+//                    println("$alreadyLastSpoken, $alreadySeenNumbers")
+                    val p = alreadySeenNumbers[alreadyLastSpoken] ?: Pair(0, 0)
+                    val spoken = if (p.first == 0) {
+                        0
+                    } else {
+                        p.second - p.first
+                    }
+                    alreadySeenNumbers[spoken] = Pair(alreadySeenNumbers[spoken]?.second ?: 0, i)
+                    alreadyLastSpoken = spoken
+
+//                    val index = alreadySeenNumbers[alreadyLastSpoken] ?: i - 1
+//                    println(alreadyLastSpoken)
+//                    println(alreadySeenNumbers)
+//                    println("index:  $i $index")
+//                    val spoken = i - 1 - index
+//                    alreadySeenNumbers[spoken] = i
+//                    alreadyLastSpoken = spoken
+                    println("Spoken0 is: $spoken")
                     while (currentIndex >= 0) {
                         if (numbersSpoken[currentIndex] == lastSpoken) {
                             val spoken = lastIndex - currentIndex
-//                            println("Spoken is: $spoken")
-                            alreadySeenNumbers.add(spoken)
+                            println("Spoken is: $spoken\n")
                             numbersSpoken.add(spoken)
                             break;
                         }
                         currentIndex -= 1
                     }
                     if (currentIndex == -1) {
-//                        println("Spok3n is 0")
+                        println("Spok3n is 0\n")
                         numbersSpoken.add(0)
                     }
                 }
             } else {
+                alreadyLastSpoken = input[i - 1]
+                alreadySeenNumbers[input[i - 1]] = Pair(0, i)
                 numbersSpoken.add(input[i - 1])
             }
         }

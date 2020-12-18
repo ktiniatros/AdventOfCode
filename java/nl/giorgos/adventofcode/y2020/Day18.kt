@@ -95,63 +95,101 @@ class Day18 {
         return result
     }
 
-    private fun wrapParenthesisToPlus(line: String): String {
-        var index: Int = line.indexOf('+')
-        val plusOccurences = mutableListOf<Int>()
-        while (index >= 0) {
-            plusOccurences.add(index)
-            index = line.indexOf('+', index + 1)
-        }
-        println(plusOccurences)
+    private fun parseLine2(line: String): Long {
+//        println("Parsing: $line")
+        var result = 1L
+        var lastOperator = '*'
+        var amountOfOpenParenthesis = 0
+        val pendingSubResult = mutableListOf<Char>()
 
-        val list = line.toCharArray().toMutableList()
-        return if (plusOccurences.size > 0) {
-            var leftParenthesisAdded = 0
-            var rightParenthesisAdded = 0
-             plusOccurences.forEach {
-                 list.add(it - 2 + leftParenthesisAdded + rightParenthesisAdded, '(')
-                 leftParenthesisAdded += 1
-                 val nextIndex = it + leftParenthesisAdded + 2 + rightParenthesisAdded
-                 val next = list[nextIndex]
-                 if (next.isDigit()) {
-                     list.add(it + leftParenthesisAdded + 3 + rightParenthesisAdded, ')')
-                     rightParenthesisAdded += 1
-                 } else if (next == '(') {
-                     val s = list.joinToString("").substring(nextIndex + 1 until list.size)
-                     val indexOfClosingParenthesis = findEndingParenthesis(s)
-//                     println(list.joinToString(""))
-//                     println("indexOfClosingParenthesis: $indexOfClosingParenthesis")
-                     list.add(nextIndex + indexOfClosingParenthesis + 1, ')')
-                     rightParenthesisAdded += 1
-                     println(list.joinToString(""))
-                 } else {
-                     println("Invalid next: $next")
-                 }
-             }
-            list.joinToString("")
-        } else {
-            line
-        }
-    }
+        val numbers = mutableListOf<Long>()
+        val operators = mutableListOf<Char>()
 
-    private fun findEndingParenthesis(s: String): Int {
-        println("Find $s")
-        var leftParenthesis = 1
-        var rightParenthesis = 0
-        s.forEachIndexed { index, c ->
-            when(c) {
-                '(' -> leftParenthesis += 1
-                ')' -> rightParenthesis += 1
+        line.forEachIndexed { index, it ->
+
+            if (amountOfOpenParenthesis > 0) {
+
+                if (it == ')') {
+                    val previousParenthesisCount = amountOfOpenParenthesis
+                    amountOfOpenParenthesis -= 1
+                    if (amountOfOpenParenthesis == 0) {
+                        if (previousParenthesisCount > 0 && amountOfOpenParenthesis == 0) {
+                            val thisDigit = parseLine2(pendingSubResult.joinToString(""))
+                            numbers.add(thisDigit)
+                        }
+                        pendingSubResult.clear()
+                    } else {
+                        pendingSubResult.add(it)
+                    }
+
+                } else {
+                    if (it == '(') {
+                        amountOfOpenParenthesis += 1
+                    }
+                    pendingSubResult.add(it)
+                }
+
+
+            } else {
+                if (it.isDigit()) {
+                    val thisDigit = Character.getNumericValue(it)
+                    numbers.add(thisDigit.toLong())
+                } else {
+                    when (it) {
+                        ' ' -> Unit
+                        '+' -> {
+                            operators.add('+')
+                        }
+                        '*' -> {
+                            operators.add('*')
+                        }
+                        '(' -> {
+                            amountOfOpenParenthesis += 1
+                        }
+                        ')' -> {
+                            throw IllegalStateException("Den eprese edw na er8ei")
+                        }
+                        else -> {
+                            throw IllegalStateException("Invalid operator: $it")
+                        }
+                    }
+                }
             }
-            if (leftParenthesis == rightParenthesis) {
-                return index
+
+
+        }
+
+//        println(numbers)
+//        println(operators)
+        while(operators.isNotEmpty()) {
+            while(operators.contains('+')) {
+                val plusIndex = operators.indexOf('+')
+                result = numbers[plusIndex] + numbers[plusIndex + 1]
+                operators.removeAt(plusIndex)
+                numbers.removeAt(plusIndex)
+                numbers.removeAt(plusIndex)
+                numbers.add(plusIndex, result)
+            }
+            if (operators.isNotEmpty()) {
+//                println(operators)
+//                println("now multiply: $numbers")
+                val multiplyIndex = operators.indexOf('*')
+//                println(multiplyIndex)
+                result = numbers[multiplyIndex] * numbers[multiplyIndex + 1]
+                operators.removeAt(multiplyIndex)
+                numbers.removeAt(multiplyIndex)
+                numbers.removeAt(multiplyIndex)
+                numbers.add(multiplyIndex, result)
             }
         }
-        throw java.lang.IllegalStateException("Invalid string for right parenthesis: $s")
+
+//        println(result)
+
+        return result
     }
 
     @Test
     fun ex2() {
-        println(wrapParenthesisToPlus(lines.first()))
+        println(lines.map(::parseLine2).sum())
     }
 }

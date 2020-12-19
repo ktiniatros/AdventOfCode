@@ -24,70 +24,93 @@ class Day19 {
         Pair(index, c)
     }.filter { it.second == char }.map { it.first }
 
-    fun isReady(s: String) = s == "a" || s == "b"
+    fun isReady(s: String) = s.all { it == 'a' || it == 'b' }
 
-    fun completeRules(map: Map<Int, List<List<String>>>): Map<Int, List<List<String>>> {
-        val finalMap = mutableMapOf<Int, MutableList<List<String>>>()
-
+    val cachedMap = mutableMapOf<Int, List<String>>()
+    private fun completeMapRules(map: Map<Int, List<String>>): Map<Int, List<String>> {
+        val finalMap = mutableMapOf<Int, MutableList<String>>()
         var isReady = true
-        map.forEach {
-            val key = it.key
-            println("")
-            println("")
-            println(key)
-            finalMap[it.key] = mutableListOf()
-            val listOfSubRules = it.value
-            listOfSubRules.forEachIndexed { subRuleIndex, subRule: List<String> ->
-                val newListOfSubRules = mutableListOf<List<String>>()
-                subRule.forEachIndexed { index, subRuleMember: String ->
-                    if (!isReady(subRuleMember)) {
-                        isReady = false
-                        val replacedSubRules = map[subRuleMember.toInt()] ?: throw Exception("WTF, couldn't find $subRuleMember in map")
-                        replacedSubRules.forEach {
-                            val newOnes = subRule.toMutableList().replaceWith(index, it)
-                            newListOfSubRules.add(newOnes)
+
+        map.forEach { (ruleNumber, rules) ->
+            val tempRules = mutableListOf<String>()
+            rules.forEachIndexed { index, rule ->
+                if (!isReady(rule)) {
+                    isReady = false
+                    rule.forEachIndexed { ruleIndex, c ->
+                        if (c.isDigit()) {
+                            val replacedRules = map[Character.getNumericValue(c)] ?: throw Exception("coundlnt' find $c")
+                            replacedRules.forEach { replacedRule ->
+                                val ruleAsList = rule.toMutableList()
+                                ruleAsList.replaceWith(ruleIndex, replacedRule.toList())
+                                val next = ruleAsList.joinToString("")
+                                if (!tempRules.contains(next)) {
+                                    tempRules.add(next)
+                                }
+                           }
                         }
                     }
-                }
-                newListOfSubRules.forEach {
-                    finalMap[key]?.add(it)
+                } else {
+                    tempRules.add(rule)
                 }
             }
+            finalMap[ruleNumber] = tempRules
         }
 
-        finalMap.forEach(::println)
+//        re += 1
+//        println("")
+//        println("")
+//        println("")
+//        println(re)
+//
+//        finalMap.forEach(::println)
+//        if (re > 1) throw Exception("")
 
-        return if (isReady) {
+        return if(isReady) {
             finalMap
         } else {
-            completeRules(finalMap)
+            completeMapRules(finalMap)
         }
     }
 
+    var re = 0
+
     @Test
     fun ex1() {
-        val rulesMap = mutableMapOf<Int, List<List<String>>>()
+        val rulesMap = mutableMapOf<Int, List<String>>()
+
+        var finalRules = mapOf<Int, List<String>>()
+
+        var sawBlank = false
+        var matches = 0
         lines.forEachIndexed { _, it ->
             val isRule = it.indexOf(':') > -1
             if (isRule) {
                 val rule = parseRule(it)
-                val ruleContent = rule.second.split(" ")
+                val ruleContent = rule.second.replace(" ", "")
                 val pipeIndex = ruleContent.indexOf("|")
                 rulesMap[rule.first] = if (pipeIndex > -1) {
-                    listOf(ruleContent.subList(0, pipeIndex), ruleContent.subList(pipeIndex + 1, ruleContent.size))
+                    ruleContent.split("|")
                 } else {
                     listOf(ruleContent)
                 }
             }
-        }
-        rulesMap.forEach {
-            println(it)
-            println("")
-        }
-        val completedRules = completeRules(rulesMap)
-//        val firstRule = completedRules[0] ?: throw Exception("Impossible")
 
-        completedRules.forEach(::println)
+            if (sawBlank) {
+//                println(finalRules[0])
+                if (finalRules[0]?.contains(it) == true) {
+                    matches += 1
+                }
+            }
+
+            if (it.isEmpty()) {
+                println("blank")
+                sawBlank = true
+                finalRules = completeMapRules(rulesMap)
+            }
+        }
+
+
+        println(matches)
     }
 
     fun <T> MutableList<T>.replaceWith(at: Int, newMembers: List<T>): MutableList<T> {

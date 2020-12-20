@@ -26,70 +26,11 @@ class Day19 {
 
     fun isReady(s: String) = s.all { it == 'a' || it == 'b' }
 
-    fun ruleIsReady(list: List<String>) = list.all(::isReady)
-
-    val cachedMap = mutableMapOf<Int, List<String>>()
-    private fun completeMapRules(map: Map<Int, List<String>>): Map<Int, List<String>> {
-        val finalMap = mutableMapOf<Int, MutableList<String>>()
-        var isReady = true
-
-        map.filterNot {
-            ruleIsReady(it.value)
-        }
-
-        map.forEach { (ruleNumber, rules) ->
-            val tempRules = mutableListOf<String>()
-            rules.forEachIndexed { index, rule ->
-                if (!isReady(rule)) {
-                    isReady = false
-                    rule.forEachIndexed { ruleIndex, c ->
-                        if (c.isDigit()) {
-                            val replacedRules = map[Character.getNumericValue(c)] ?: throw Exception("coundlnt' find $c")
-                            replacedRules.forEach { replacedRule ->
-                                val ruleAsList = rule.toMutableList()
-                                ruleAsList.replaceWith(ruleIndex, replacedRule.toList())
-                                val next = ruleAsList.joinToString("")
-                                if (!tempRules.contains(next)) {
-                                    tempRules.add(next)
-                                }
-                           }
-                        }
-                    }
-                } else {
-                    tempRules.add(rule)
-                }
-            }
-            finalMap[ruleNumber] = tempRules
-        }
-
-//        re += 1
-//        println("")
-//        println("")
-//        println("")
-//        println(re)
-//
-//        finalMap.forEach(::println)
-//        if (re > 1) throw Exception("")
-
-        return if(isReady) {
-            finalMap
-        } else {
-            completeMapRules(finalMap)
-        }
-    }
-
     var re = 0
 
     class Rule(val input: List<String>) {
 
         fun String.isNumber() = this.all { it.isDigit() }
-        fun forEachIndexed(cb: (Int, String) -> Unit) {
-            input.forEachIndexed { index, s: String ->
-                if (s.isNumber()) {
-                    cb(index, s)
-                }
-            }
-        }
 
         fun isReady() = input.none { it.any { it.isDigit() } }
 
@@ -182,17 +123,6 @@ class Day19 {
                 val result = rule.replaceFrom(map)
 //                println(result)
                 tempRules.addAll(result)
-//                val ruleAsList = rule.input.toMutableList()
-//                rule.forEachIndexed { ruleIndex, c ->
-//                    val replacedRules = map[c.toInt()] ?: throw Exception("coundlnt' find $c")
-//                    replacedRules.forEach { replacedRule ->
-//                        ruleAsList.replaceWith(ruleIndex, replacedRule.input)
-//                        val newRule = Rule(ruleAsList)
-//                        if (!newRule.containedIn(tempRules)) {
-//                            tempRules.add(newRule)
-//                        }
-//                    }
-//                }
             } else {
                 tempRules.add(rule)
             }
@@ -202,7 +132,7 @@ class Day19 {
 //        println("")
 
         re += 1
-//        println("Completed: $re lists:${tempRules.size}, isReady:$isReady")
+        println("Completed: $re lists:${tempRules.size}, isReady:$isReady")
 
         return if (isReady) {
             tempRules
@@ -272,8 +202,8 @@ class Day19 {
     fun ex2() {
         lines = lines.map {
             when {
-                it == "8: 42" -> "8: 42 | 42 8"
-                it == "11: 42 31" -> "11: 42 31 | 42 11 31"
+                it == "8: 42" -> "8: 42 8"
+                it == "11: 42 31" -> "11: 42 31"
                 else -> it
             }
         }

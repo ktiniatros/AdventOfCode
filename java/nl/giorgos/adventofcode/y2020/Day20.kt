@@ -1,6 +1,7 @@
 package nl.giorgos.adventofcode.y2020
 
 import nl.giorgos.adventofcode.Utils
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.InvalidPathException
 import kotlin.math.sqrt
@@ -11,7 +12,8 @@ class Day20 {
             fileName,
             "Invalid input"
     )
-    private val tilesText = Utils.convertFileToString(input).split("\n\n")
+    private val inputAsList = Utils.convertFileToString(input).split("\n\n")
+    private val tilesText = inputAsList.subList(0, inputAsList.size - 1)
 
     class Tile(val input: String) {
         val title: String
@@ -39,7 +41,7 @@ class Day20 {
             val contentParts = input.split("\n")
             title = contentParts.first()
             id = title.split(" ").get(1).substring(0..3).toLong()
-            size = contentParts.first().length
+            size = contentParts.last().length
             content = MutableList(size) {
                 MutableList(size) {
                     '0'
@@ -148,6 +150,12 @@ class Day20 {
         fun contentWithoutBorders(): List<MutableList<Char>> {
             return content.filterIndexed { index, _ -> index !=0 && index != size - 1 }.map { it.subList(1, size - 1) }
         }
+
+        fun contentWithoutBordersAsString(): String {
+            return title + "\n" + content.filterIndexed { index, _ -> index !=0 && index != size - 1 }
+                    .map { it.subList(1, size - 1) }
+                    .map { it.joinToString("") }.joinToString("\n")
+        }
     }
 
     private val tiles = tilesText.map { Tile(it) }
@@ -177,8 +185,82 @@ class Day20 {
         println(neighbours.filter { it.value.size == 2 }.map { it.key }.reduceRight(::multiply))
     }
 
+    private fun getTwoTilesAsString(tile1: Tile, tile2: Tile): String {
+        return getTwoTilesAsList(tile1, tile2).joinToString("")
+    }
+
+    private fun getTwoTilesAsList(tile1: Tile, tile2: Tile): MutableList<Char> {
+        val content1 = tile1.content
+        val content2 = tile2.content
+        val result = mutableListOf<Char>()
+        content1.forEachIndexed { index, row1 ->
+            for (char in row1) {
+                result.add(char)
+            }
+            for (char in content2[index]) {
+                result.add(char)
+            }
+        }
+
+        return result
+    }
+
     @Test
     fun ex2() {
+        val monsterPattern = "                  # #    ##    ##    ### #  #  #  #  #  #   "
+        val monsterPatternSize = monsterPattern.length
+        val monsterIndexes = monsterPattern.mapIndexed { index, c ->
+            if (c == '#') {
+                index
+            } else {
+                -1
+            }
+        }.filter { it > -1 }
+        val neighbours = findNeighbourTiles()
+
+        val tilesWithoutBorders = tiles.map { Tile(it.contentWithoutBordersAsString()) }
+        val tileSize = tilesWithoutBorders.first().size
+
+        val tilesMap = mutableMapOf<Long, Tile>()
+        tilesWithoutBorders.forEach {
+            tilesMap[it.id] = it
+        }
+        val finalContent = mutableListOf<Char>()
+        tilesWithoutBorders.forEach {
+            val currentNeighbours = neighbours[it.id] ?: throw Exception("Cound't find neigbours for ${it.id} in $neighbours")
+            currentNeighbours.forEach { cbId ->
+                val pairOfTiles = getTwoTilesAsList(it, tilesMap[cbId] ?: throw Exception("$cbId not found in $tilesMap"))
+                finalContent.addAll(pairOfTiles)
+            }
+        }
+
+        fun isMonster(specimen: List<Char>): Boolean = specimen.filterIndexed { index, _ ->
+            monsterIndexes.contains(index)
+        }.all { it == '#' }
+
+        println(finalContent.size)
+
+        val sanityCheckString = ".#...#.###...#.##.O#O.##.OO#.#.OO.##.OOO#O.#O#.O##O..O.#O##.".replace('O', '#')
+        assertEquals(monsterPatternSize, sanityCheckString.length)
+        println("Einai?: ${isMonster(sanityCheckString.toList())}")
+        var monstersCount = 0
+        for (i in 0 until finalContent.size - monsterPatternSize - 1) {
+            val imagePart = finalContent.subList(i, i + monsterPatternSize)
+            if (isMonster(imagePart)) monstersCount += 1
+        }
+
+        println("Found $monstersCount monsters")
+
+    }
+
+    @Test
+    fun test() {
+        val a = "12345".toList()
+        println(a.subList(0, 4))
+    }
+
+    @Test
+    fun ex22() {
         val imageSize = sqrt(tiles.size.toDouble()).toInt()
         println(imageSize)
 //        tiles.last().content.forEach(::println)
@@ -202,7 +284,7 @@ class Day20 {
         finalImage[imageSize - 1][imageSize - 1] = cornerTiles[2]
         finalImage[0][imageSize - 1] = cornerTiles[3]
 
-        val tilesIdsAdded = (mutableListOf<Long>() + cornerIds).toMutableList()
+        val tilesIdsAdded = (mutableListOf<Long>() + cornerIds).toMutableSet()
         cornerTiles.forEachIndexed { index, tile ->
             val nextNeighbourIdsToAdd = neighbours[tile.id] ?: throw Exception("There are.")
             val neighbourTiles = tiles.filter { nextNeighbourIdsToAdd.contains(it.id) }
@@ -233,20 +315,22 @@ class Day20 {
 
 
 
-        var hashCount = 0
-        val monsterLines = mutableListOf(Triple("", "", ""))
-        tilesText.filterNot { it.isEmpty() }.mapIndexed { rowIndex, it ->
-            if (it.contains('O')) {
-                val lastTriple = monsterLines.last()
-                when {
-                    lastTriple.third.isEmpty() -> monsterLines[monsterLines.size - 1] = Triple(lastTriple.first, lastTriple.second, it)
-                    lastTriple.second.isEmpty() -> monsterLines[monsterLines.size - 1] = Triple(lastTriple.first, it, lastTriple.third)
-                    lastTriple.first.isEmpty() -> monsterLines[monsterLines.size - 1] = Triple(it, lastTriple.second, lastTriple.third)
-                    else -> monsterLines.add(Triple(it, "", ""))
-                }
-            } else {
-                hashCount += it.length
-            }
-        }
+
+
+//        var hashCount = 0
+//        val monsterLines = mutableListOf(Triple("", "", ""))
+//        tilesText.filterNot { it.isEmpty() }.mapIndexed { rowIndex, it ->
+//            if (it.contains('O')) {
+//                val lastTriple = monsterLines.last()
+//                when {
+//                    lastTriple.third.isEmpty() -> monsterLines[monsterLines.size - 1] = Triple(lastTriple.first, lastTriple.second, it)
+//                    lastTriple.second.isEmpty() -> monsterLines[monsterLines.size - 1] = Triple(lastTriple.first, it, lastTriple.third)
+//                    lastTriple.first.isEmpty() -> monsterLines[monsterLines.size - 1] = Triple(it, lastTriple.second, lastTriple.third)
+//                    else -> monsterLines.add(Triple(it, "", ""))
+//                }
+//            } else {
+//                hashCount += it.length
+//            }
+//        }
     }
 }
